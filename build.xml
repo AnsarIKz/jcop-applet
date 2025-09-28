@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="ZereansApplet" default="build" basedir=".">
+    
+    <!-- Project properties -->
+    <property name="src.dir" value="src"/>
+    <property name="build.dir" value="build"/>
+    <property name="classes.dir" value="${build.dir}/classes"/>
+    <property name="cap.dir" value="${build.dir}/cap"/>
+    <property name="lib.dir" value="lib"/>
+    <property name="test.dir" value="test"/>
+    
+    <!-- Java Card SDK paths -->
+    <property name="jc.home" value="${env.JAVACARD_HOME}"/>
+    <property name="jc.sdk" value="${jc.home}"/>
+    
+    <!-- Fallback to local SDK if env var not set -->
+    <property name="jc.sdk" value="sdk"/>
+    
+    <!-- AID для апплета -->
+    <property name="applet.aid" value="A0:00:00:00:62:03:01:0C:06"/>
+    <property name="package.aid" value="A0:00:00:00:62:03:01:0C"/>
+    
+    <!-- Classpath -->
+    <path id="classpath">
+        <fileset dir="${lib.dir}" includes="*.jar"/>
+        <fileset dir="sdk/lib" includes="*.jar"/>
+    </path>
+    
+    <!-- Clean target -->
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+    </target>
+    
+    <!-- Compile target -->
+    <target name="compile" depends="clean">
+        <mkdir dir="${classes.dir}"/>
+        <javac srcdir="${src.dir}" 
+               destdir="${classes.dir}" 
+               classpathref="classpath"
+               source="8"
+               target="8"
+               debug="true"
+               encoding="UTF-8"
+               includeantruntime="false"
+               fork="true">
+            <include name="**/*.java"/>
+            <compilerarg value="-Xlint:-options"/>
+            <compilerarg value="-Xlint:-processing"/>
+            <compilerarg value="-proc:none"/>
+        </javac>
+    </target>
+    
+    <!-- Convert to CAP -->
+    <target name="convert" depends="compile">
+        <mkdir dir="${cap.dir}"/>
+        <exec executable="sdk/bin/converter" failonerror="true">
+            <arg value="-out"/>
+            <arg value="${cap.dir}"/>
+            <arg value="-applet"/>
+            <arg value="${applet.aid}"/>
+            <arg value="com.zereans.applet.ZereansApplet"/>
+            <arg value="com.zereans.applet"/>
+            <arg value="${package.aid}"/>
+            <arg value="1.0"/>
+            <arg line="${classes.dir}"/>
+        </exec>
+    </target>
+    
+    <!-- Generate CAP file -->
+    <target name="capgen" depends="convert">
+        <exec executable="sdk/bin/capgen" failonerror="true">
+            <arg value="-out"/>
+            <arg value="${cap.dir}/ZereansApplet.cap"/>
+            <arg value="-applet"/>
+            <arg value="${applet.aid}"/>
+            <arg value="com.zereans.applet.ZereansApplet"/>
+            <arg value="com.zereans.applet"/>
+            <arg value="${package.aid}"/>
+            <arg value="1.0"/>
+            <arg line="${classes.dir}"/>
+        </exec>
+    </target>
+    
+    <!-- Build target -->
+    <target name="build" depends="capgen">
+        <echo message="Build completed successfully"/>
+        <echo message="CAP file created: ${cap.dir}/ZereansApplet.cap"/>
+    </target>
+    
+    <!-- Test target -->
+    <target name="test" depends="build">
+        <echo message="Running comprehensive tests..."/>
+        <java classname="com.zereans.applet.test.ZereansAppletTest" 
+              classpath="${classes.dir}" 
+              fork="true">
+            <arg value="runAllTests"/>
+        </java>
+        <echo message="Running JCOP card tests..."/>
+        <java classname="com.zereans.applet.test.JCOPCardTest" 
+              classpath="${classes.dir}" 
+              fork="true">
+            <arg value="runAllTests"/>
+        </java>
+    </target>
+    
+    <!-- Verify CAP file -->
+    <target name="verify" depends="build">
+        <exec executable="sdk/bin/verifycap" failonerror="true">
+            <arg value="${cap.dir}/ZereansApplet.cap"/>
+        </exec>
+        <echo message="CAP file verification completed"/>
+    </target>
+    
+    <!-- Install on JCOP card (requires JCOP Tools) -->
+    <target name="jcop-install" depends="build" if="jcop.available">
+        <exec executable="${env.JCOP_HOME}/bin/jcop" failonerror="true">
+            <arg value="install"/>
+            <arg value="${cap.dir}/ZereansApplet.cap"/>
+        </exec>
+        <echo message="Applet installed on JCOP card"/>
+    </target>
+    
+    <!-- Delete from JCOP card -->
+    <target name="jcop-delete" if="jcop.available">
+        <exec executable="${env.JCOP_HOME}/bin/jcop" failonerror="true">
+            <arg value="delete"/>
+            <arg value="${applet.aid}"/>
+        </exec>
+        <echo message="Applet deleted from JCOP card"/>
+    </target>
+    
+    <!-- Full build with tests -->
+    <target name="full-build" depends="clean,build,test,verify">
+        <echo message="Full build completed with tests and verification"/>
+    </target>
+    
+</project>
