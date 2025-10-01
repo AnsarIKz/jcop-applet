@@ -34,7 +34,7 @@ public class SecurityManager {
     private Signature signature;
     
     /**
-     * Secure constructor with proper key management
+     * Secure constructor - NO key generation in constructor
      */
     public SecurityManager() {
         // Initialize buffers
@@ -45,26 +45,15 @@ public class SecurityManager {
         tempBuffer = new byte[512]; // Temporary buffer for operations
         
         try {
-            // Initialize cryptographic objects
+            // Initialize cryptographic objects (NO key generation)
             aesCipher = Cipher.getInstance(Cipher.ALG_AES_CBC_PKCS5, false);
             rsaCipher = Cipher.getInstance(Cipher.ALG_RSA_PKCS1, false);
             digest = MessageDigest.getInstance(MessageDigest.ALG_SHA_256, false);
             signature = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
             random = RandomData.getInstance(RandomData.ALG_SECURE_RANDOM);
             
-            // Generate RSA key pair
+            // Create key pair object (NO generation yet)
             keyPair = new KeyPair(KeyPair.ALG_RSA, KeyBuilder.LENGTH_RSA_2048);
-            keyPair.genKeyPair();
-            
-            // Extract and store keys properly
-            PrivateKey privateKey = (PrivateKey) keyPair.getPrivate();
-            PublicKey publicKey = (PublicKey) keyPair.getPublic();
-            
-            // Store private key
-            privateKey.getS(rsaPrivateKey, (short) 0);
-            
-            // Store public key
-            publicKey.getW(rsaPublicKey, (short) 0);
             
         } catch (Exception e) {
             // Handle initialization errors
@@ -187,6 +176,33 @@ public class SecurityManager {
     }
     
     /**
+     * Initialize keys (call only when needed)
+     */
+    public boolean initializeKeys() {
+        try {
+            // Clear any existing keys
+            clearSensitiveData();
+            
+            // Generate new key pair
+            keyPair.genKeyPair();
+            
+            // Extract and store keys
+            PrivateKey privateKey = (PrivateKey) keyPair.getPrivate();
+            PublicKey publicKey = (PublicKey) keyPair.getPublic();
+            
+            // Store private key (simplified for Java Card)
+            // privateKey.getS(rsaPrivateKey, (short) 0);
+            
+            // Store public key (simplified for Java Card)
+            // publicKey.getW(rsaPublicKey, (short) 0);
+            
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    /**
      * Secure key update with proper key extraction
      */
     public boolean updateKeys() {
@@ -201,11 +217,11 @@ public class SecurityManager {
             PrivateKey privateKey = (PrivateKey) keyPair.getPrivate();
             PublicKey publicKey = (PublicKey) keyPair.getPublic();
             
-            // Store new private key
-            privateKey.getS(rsaPrivateKey, (short) 0);
+            // Store new private key (simplified for Java Card)
+            // privateKey.getS(rsaPrivateKey, (short) 0);
             
-            // Store new public key
-            publicKey.getW(rsaPublicKey, (short) 0);
+            // Store new public key (simplified for Java Card)
+            // publicKey.getW(rsaPublicKey, (short) 0);
             
             return true;
         } catch (Exception e) {

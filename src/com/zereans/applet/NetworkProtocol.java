@@ -87,7 +87,7 @@ public class NetworkProtocol {
     }
     
     /**
-     * Создание сообщения транзакции
+     * Create transaction message
      */
     public short createTransactionMessage(byte partnerId, byte[] transactionData, 
                                         short dataLength, byte[] output, short offset) {
@@ -110,7 +110,7 @@ public class NetworkProtocol {
     }
     
     /**
-     * Создание сообщения ответа
+     * Create response message
      */
     public short createResponseMessage(byte partnerId, byte responseCode, 
                                      byte[] responseData, short dataLength,
@@ -136,7 +136,7 @@ public class NetworkProtocol {
     }
     
     /**
-     * Создание сообщения об ошибке
+     * Create error message
      */
     public short createErrorMessage(byte partnerId, byte errorCode, 
                                   byte[] output, short offset) {
@@ -154,47 +154,47 @@ public class NetworkProtocol {
     }
     
     /**
-     * Парсинг входящего сообщения
+     * Parse incoming message
      */
     public boolean parseMessage(byte[] data, short offset, short length) {
         if (length < OFFSET_DATA) {
             return false;
         }
         
-        // Проверка версии протокола
+        // Check protocol version
         if (data[offset + OFFSET_VERSION] != PROTOCOL_VERSION) {
             return false;
         }
         
-        // Копирование данных в буфер
+        // Copy data to buffer
         Util.arrayCopy(data, offset, messageBuffer, (short) 0, length);
         
         return true;
     }
     
     /**
-     * Получение типа сообщения
+     * Get message type
      */
     public byte getMessageType() {
         return messageBuffer[OFFSET_TYPE];
     }
     
     /**
-     * Получение ID партнера
+     * Get partner ID
      */
     public byte getPartnerId() {
         return messageBuffer[OFFSET_PARTNER_ID];
     }
     
     /**
-     * Получение номера последовательности
+     * Get sequence number
      */
     public byte getSequenceNumber() {
         return messageBuffer[OFFSET_SEQUENCE];
     }
     
     /**
-     * Получение данных сообщения
+     * Get message data
      */
     public short getMessageData(byte[] output, short offset) {
         short dataLength = messageBuffer[OFFSET_DATA_LENGTH];
@@ -203,7 +203,7 @@ public class NetworkProtocol {
     }
     
     /**
-     * Добавление партнера в список
+     * Add partner to list
      */
     public boolean addPartner(byte partnerId) {
         for (byte i = 0; i < MAX_PARTNERS; i++) {
@@ -216,7 +216,7 @@ public class NetworkProtocol {
     }
     
     /**
-     * Проверка наличия партнера
+     * Check partner existence
      */
     public boolean isPartnerValid(byte partnerId) {
         for (byte i = 0; i < MAX_PARTNERS; i++) {

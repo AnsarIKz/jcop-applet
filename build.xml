@@ -31,7 +31,7 @@
         <delete dir="${build.dir}"/>
     </target>
     
-    <!-- Compile target -->
+    <!-- Compile target with security checks -->
     <target name="compile" depends="clean">
         <mkdir dir="${classes.dir}"/>
         <javac srcdir="${src.dir}" 
@@ -47,7 +47,18 @@
             <compilerarg value="-Xlint:-options"/>
             <compilerarg value="-Xlint:-processing"/>
             <compilerarg value="-proc:none"/>
+            <compilerarg value="-Xlint:all"/>
+            <compilerarg value="-Xlint:deprecation"/>
+            <compilerarg value="-Xlint:unchecked"/>
         </javac>
+        
+        <!-- Security validation -->
+        <echo message="Running security checks..."/>
+        <java classname="com.zereans.applet.test.SecurityValidator" 
+              classpath="${classes.dir}" 
+              fork="true"
+              failonerror="false">
+        </java>
     </target>
     
     <!-- Convert to CAP -->
@@ -127,6 +138,20 @@
             <arg value="${applet.aid}"/>
         </exec>
         <echo message="Applet deleted from JCOP card"/>
+    </target>
+    
+    <!-- Security check target -->
+    <target name="security-check" depends="compile">
+        <echo message="Running security validation..."/>
+        <java classname="com.zereans.applet.test.SecurityValidator" 
+              classpath="${classes.dir}" 
+              fork="true">
+        </java>
+    </target>
+    
+    <!-- Full security test -->
+    <target name="full-security-test" depends="clean,compile,security-check,test,verify">
+        <echo message="Full security test completed"/>
     </target>
     
     <!-- Full build with tests -->

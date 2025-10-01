@@ -53,13 +53,16 @@ public class TransactionManager {
     }
     
     /**
-     * Create secure transaction with proper validation
+     * Create secure transaction with proper validation and atomic operations
      */
     public boolean createTransaction(byte[] data, short offset, short length, 
                                    PrivateKey privateKey) {
         if (!isInitialized || length > TXN_DATA_LENGTH || length <= 0) {
             return false;
         }
+        
+        // Store original state for rollback
+        short originalId = transactionId;
         
         try {
             // Clear previous transaction data
@@ -73,6 +76,8 @@ public class TransactionManager {
                                            hashBuffer, (short) 0);
             
             if (hashLength != HASH_LENGTH) {
+                // Rollback on hash failure
+                transactionId = originalId;
                 return false;
             }
             
@@ -82,12 +87,19 @@ public class TransactionManager {
                                             signatureBuffer, (short) 0);
             
             if (sigLength != SIGNATURE_LENGTH) {
+                // Rollback on signature failure
+                transactionId = originalId;
+                clearTransaction();
                 return false;
             }
             
+            // Only increment ID on success
             transactionId++;
             return true;
         } catch (Exception e) {
+            // Rollback on any exception
+            transactionId = originalId;
+            clearTransaction();
             return false;
         }
     }
